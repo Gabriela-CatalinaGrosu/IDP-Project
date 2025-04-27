@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: MobyLabWebProgramming.Backend/Dockerfile
+    container_name: webapp-backend
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=webapp;Username=postgres;Password=postgres
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: webapp-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: webapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: webapp-adminer
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
