@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "webapp-db",
+      "Group": "Servers",
+      "Host": "backend-app-db",
+      "Port": 5432,
+      "MaintenanceDB": "webapp_db",
+      "Username": "admin",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}
