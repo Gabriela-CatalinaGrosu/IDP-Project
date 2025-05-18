@@ -1,0 +1,33 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: webapp
+    url: http://webapp:8080
+    routes:
+      - name: webapp-route
+        paths:
+          - ~/api/
+        strip_path: false
+        regex_priority: 200
+      - name: swagger-route
+        paths:
+          - /swagger
+        strip_path: false
+        regex_priority: 100
+  
+  - name: pgadmin
+    url: http://pgadmin:80
+    routes:
+      - name: pgadmin-route
+        paths:
+          - /pgadmin
+        strip_path: false
+
+    plugins:
+      - name: request-transformer
+        config:
+          add:
+            headers:
+              - X-Script-Name:/pgadmin
+      
