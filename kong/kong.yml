@@ -30,4 +30,19 @@ services:
           add:
             headers:
               - X-Script-Name:/pgadmin
+  
+  - name: portainer
+    url: http://portainer:9000
+    routes:
+      - name: portainer-route
+        paths:
+          - /portainer
+        # strip_path: false
+        strip_path: true
+    # plugins:
+    #   - name: request-transformer
+    #     config:
+    #       add:
+    #         headers:
+    #           - X-Script-Name:/portainer
       
