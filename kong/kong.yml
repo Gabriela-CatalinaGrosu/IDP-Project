@@ -1,21 +1,50 @@
-_format_version: "2.1"
+_format_version: "3.0"
 _transform: true
 
 services:
-  - name: webapp
-    url: http://webapp:8080
+  - name: auth-service
+    url: http://auth-service:80
     routes:
-      - name: webapp-route
+      - name: auth-api-route
         paths:
-          - ~/api/
-        strip_path: false
-        regex_priority: 200
-      - name: swagger-route
+          - /auth/api
+        strip_path: true
+      - name: auth-swagger-route
         paths:
-          - /swagger
-        strip_path: false
-        regex_priority: 100
-  
+          - /auth/swagger
+        strip_path: true
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify:
+            - aud=webapp
+
+  - name: business-service
+    url: http://business-service:80
+    routes:
+      - name: business-api-route
+        paths:
+          - /business/api
+        strip_path: true
+      - name: business-swagger-route
+        paths:
+          - /business/swagger
+        strip_path: true
+
+  - name: db-service
+    url: http://db-service:80
+    routes:
+      - name: db-api-route
+        paths:
+          - /db/api
+        strip_path: true
+      - name: db-swagger-route
+        paths:
+          - /db/swagger
+        strip_path: true
+
   - name: pgadmin
     url: http://pgadmin:80
     routes:
@@ -23,26 +52,17 @@ services:
         paths:
           - /pgadmin
         strip_path: false
-
     plugins:
       - name: request-transformer
         config:
           add:
             headers:
               - X-Script-Name:/pgadmin
-  
+
   - name: portainer
     url: http://portainer:9000
     routes:
       - name: portainer-route
         paths:
           - /portainer
-        # strip_path: false
         strip_path: true
-    # plugins:
-    #   - name: request-transformer
-    #     config:
-    #       add:
-    #         headers:
-    #           - X-Script-Name:/portainer
-      

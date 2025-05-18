@@ -1,4 +1,71 @@
+version: '3.8'
 services:
+  auth-service:
+    image: ${DOCKER_REGISTRY:-local}/auth-service:latest
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__WebAppDatabase=Host=backend-app-db;Port=5432;Database=webapp_db;Username=admin;Password=password
+      - JwtConfiguration__Key=SecretKey00000000000000000000000
+      - JwtConfiguration__Issuer=auth-service
+      - JwtConfiguration__Audience=webapp
+      - JwtConfiguration__ExpiryMinutes=60
+    ports:
+      - "8080:80"
+    networks:
+      - app-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  db-service:
+    image: ${DOCKER_REGISTRY:-local}/db-service:latest
+    build:
+      context: ./db-service
+      dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__WebAppDatabase=Host=backend-app-db;Port=5432;Database=webapp_db;Username=admin;Password=password
+    ports:
+      - "8081:80"
+    networks:
+      - app-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  business-service:
+    image: ${DOCKER_REGISTRY:-local}/business-service:latest
+    build:
+      context: ./business-service
+      dockerfile: Dockerfile
+    environment:
+      - DbServiceUrl=http://db-service:80
+    ports:
+      - "8082:80"
+    networks:
+      - app-net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  backend-app-db:
+    image: postgres:13.2-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: webapp_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 
   kong:
     image: kong:3.9.0
@@ -15,16 +82,15 @@ services:
       - 8443:8443
       - 8001:8001
       - 8444:8444
-    # volumes:
-    #   - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml
     configs:
       - source: kong-config
         target: /usr/local/kong/declarative/kong.yml
     networks:
-      - kong
+      - app-net
     deploy:
-      mode: replicated
       replicas: 1
+      restart_policy:
+        condition: on-failure
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -33,77 +99,40 @@ services:
     volumes:
       - portainer-data:/data
     deploy:
-      mode: replicated
       replicas: 1
       placement:
         constraints:
           - node.role == manager
     networks:
-      - kong
-
-  webapp:
-    image: webapp
-    networks:
-      - backend
-      - kong
-    deploy:
-      mode: replicated
-      replicas: 1
-
- 
-  backend-app-db:
-    image: postgres:13.2-alpine
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_DB: webapp_db
-      POSTGRES_PASSWORD: password
-    volumes:
-      - app-db-vol:/var/lib/postgresql/data
-    networks:
-      - backend
-      - database-admin
-    deploy:
-      mode: replicated
-      replicas: 1
+      - app-net
 
   pgadmin:
     image: dpage/pgadmin4
-    restart: always
-    ports:
-      - 8002:80
-    depends_on:
-      - backend-app-db
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.admin
       PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8002:80"
     volumes:
       - pgadmin-vol:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json
       - ./pgadmin/.pgpass:/pgpass
     networks:
-      - database-admin
-      - kong
+      - app-net
     deploy:
-      mode: replicated
       replicas: 1
-    
+      restart_policy:
+        condition: on-failure
 
 volumes:
-  app-db-vol:
-    # driver: local
-  pgadmin-vol:
-    # driver: local
+  postgres-data:
   portainer-data:
-
+  pgadmin-vol:
 
 configs:
   kong-config:
     file: ./kong/kong.yml
 
 networks:
-  backend:
-  database-admin:
-  kong:
-  
+  app-net:
+    driver: overlay
