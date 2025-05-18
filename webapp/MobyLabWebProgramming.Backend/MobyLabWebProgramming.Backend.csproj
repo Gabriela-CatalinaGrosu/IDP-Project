@@ -21,15 +21,4 @@
     <ProjectReference Include="..\MobyLabWebProgramming.Core\MobyLabWebProgramming.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.5.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.5.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.5.1" />
-    <PackageReference Include="OpenTelemetry.Exporter.Jaeger" Version="1.5.1" />
-  </ItemGroup>
-
 </Project>
