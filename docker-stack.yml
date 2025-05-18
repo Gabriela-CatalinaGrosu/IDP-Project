@@ -89,13 +89,67 @@ services:
       mode: replicated
       replicas: 1
     
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - /var/log:/var/log
+      - /etc/machine-id:/etc/machine-id
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /run/docker.sock:/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
+    deploy:
+      mode: global
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitoring
+      - kong
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:8000/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+      - kong
+    deploy:
+      mode: replicated
+      replicas: 1
+
 
 volumes:
   app-db-vol:
-    # driver: local
   pgadmin-vol:
-    # driver: local
   portainer-data:
+  grafana-data:
 
 
 configs:
@@ -106,4 +160,5 @@ networks:
   backend:
   database-admin:
   kong:
+  monitoring:
   
